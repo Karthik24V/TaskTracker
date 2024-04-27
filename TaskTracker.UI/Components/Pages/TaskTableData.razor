@@ -1,0 +1,135 @@
+﻿@using TaskTracker.DL.Models
+@using TaskTracker.UI.Enum
+@using TaskTracker.UI.Models
+@inject TaskServices taskServices
+@inject NavigationManager navigationManager
+@inject ISnackbar snackBar
+    @if (Elements.Any())
+    {
+        <MudDataGrid Items="@Elements"
+                     EditMode="@DataGridEditMode.Cell" Class="w-100">
+            <Columns>
+                <HierarchyColumn T="TaskTrackerModel" ButtonDisabledFunc="@(x => (x.Activities?.Count == 0 || x.Activities == null)? true : false)" />
+                <PropertyColumn Property="x => x.TaskName" Title="Task" />
+                <TemplateColumn Title="Tags">
+                    <CellTemplate>
+                        @foreach (var (tag, index) in context.Item.Tags.Select((tag, index) => (tag, index)))
+                        {
+                            <MudChip Color="@GetChipColor(index)" Variant="Variant.Filled" Size="Size.Small">@tag</MudChip>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+                <PropertyColumn Property="x => x.DueDate" Title="Due Date" />
+                <PropertyColumn Property="x => x.Color" Title="Colour" />
+                <PropertyColumn Property="x => x.AssignedTo" Title="Assigned To" />
+                <TemplateColumn Title="Status">
+                    <CellTemplate>
+                     <MudChip Color="@GetColorForStatus(context.Item.Status.ToString())" Variant="Variant.Outlined" Size="Size.Small">@context.Item.Status</MudChip>
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn  Title="Actions" HeaderColSpan="2">
+                     <CellTemplate>
+                         <div>
+                        <MudIconButton Icon="@Icons.Material.Outlined.Add" Color="Color.Primary" Title="Add Activity" @onclick="() => OpenAddActivity(context.Item.Id)" />
+                        <MudIconButton Icon="@Icons.Material.Outlined.Edit" Color="Color.Primary" Title="Edit Task" @onclick="() => EditTask(context.Item.Id)" />
+                        <MudIconButton Icon="@Icons.Material.Outlined.RemoveRedEye" Color="Color.Primary" Title="View Task" @onclick="() => ViewTask(context.Item.Id)" />
+                        <MudIconButton Icon="@Icons.Material.Outlined.Delete" Color="Color.Secondary" Title="Delete Task" @onclick="() => DeleteTask(context.Item.Id)" />
+                         </div>
+                    </CellTemplate>
+                </TemplateColumn>
+
+            </Columns>
+            <ChildRowContent Context="childContext">
+                @if (childContext.Item.Activities?.Count > 0 || childContext.Item.Activities != null)
+                {
+                    <MudTable Items="@childContext.Item.Activities" Hover="true" Class="my-custom-table shadow-sm">
+                            <HeaderContent>
+                                <MudTh Class="fw-bold text-center" colspan="4">Activity Description</MudTh>
+                                <MudTh Class="fw-bold text-center" colspan="1">Activity Date</MudTh>
+                                <MudTh Class="fw-bold text-center" colspan="2">Done By</MudTh>
+                            </HeaderContent>
+                            <RowTemplate Context="rowContext">
+                                <MudTd colspan="4" Class="text-center">@rowContext.ActivityDescription</MudTd>
+                                <MudTd colspan="1" Class="text-center">@rowContext.ActivityDate</MudTd>
+                                <MudTd colspan="2" Class="text-center">@rowContext.DoneBy</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                }
+                else
+                {
+                    <MudText Style="padding: 8px;">
+                        <MudText Typo="Typo.body1" Class="fw-bold" Style="display:flex; justify-content:center;">No Activities found</MudText>
+                    </MudText>
+                }
+            </ChildRowContent>
+            <PagerContent>
+                <MudDataGridPager T="TaskTrackerModel" />
+            </PagerContent>
+        </MudDataGrid>
+    }
+    else{
+        <MudCard Style="padding: 8px;">
+            <MudCardContent>
+                <MudCard Style="padding: 8px;">
+                    <MudText Typo="Typo.body1" Class="fw-bold">No Tasks found</MudText>
+                </MudCard>
+            </MudCardContent>
+        </MudCard>
+    }
+@code {
+    [Parameter]
+    public IEnumerable<TaskTrackerModel> Elements { get; set; }
+    private void OpenAddActivity(int id)
+    {
+        navigationManager.NavigateTo($"/addactivity/{id}");
+    }
+    private void EditTask(int id)
+    {
+        navigationManager.NavigateTo($"/edittask/{id}");
+    }
+    private void ViewTask(int id)
+    {
+        navigationManager.NavigateTo($"/viewtask/{id}");
+    }
+    private void DeleteTask(int id)
+    {
+        var isSuccess = taskServices.DeleteTask(id);
+        snackBar.Add(isSuccess.Result, isSuccess.Result.Contains("Successfully") ? Severity.Success : Severity.Error);
+    }
+    private MudBlazor.Color GetChipColor(int index)
+    {
+        switch (index % 4)
+        {
+            case 0:
+                return Color.Primary;
+            case 1:
+                return Color.Secondary;
+            case 2:
+                return Color.Info;
+            default:
+                return Color.Default;
+        }
+    }
+    private MudBlazor.Color GetColorForStatus(string status)
+    {
+        switch (status)
+        {
+            case "Open":
+                return Color.Primary;
+            case "Pending":
+                return Color.Inherit;
+            case "InProgress":
+                return Color.Info;
+            case "Cancelled":
+                return Color.Error;
+            case "Completed":
+                return Color.Success;
+            case "OnHold":
+                return Color.Inherit;
+            default:
+                return Color.Default;
+        }
+    }
+    private bool _isReadOnly = true;
+
+}

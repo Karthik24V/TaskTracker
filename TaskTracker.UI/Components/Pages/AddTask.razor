@@ -1,0 +1,139 @@
+﻿@page "/addTask"
+@using TaskTracker.UI.Enum
+@using TaskTracker.UI.Models
+@layout MainLayout
+@inject ISnackbar Snackbar
+
+<MudContainer class="outlined-card">
+    <MudCard class="border-2" style="padding : 17px">
+        <MudToolBar>
+            <div class="toolbar-content" style="display: flex; align-items: center;">
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" @onclick="navigatetomainpage">
+                    <MudIcon Icon="@Icons.Material.Filled.ArrowBack" />
+                </MudButton>
+                <MudText Typo="Typo.h4" style="margin-left: 10px;">Add New Task</MudText>
+            </div>
+        </MudToolBar>
+         <div>
+            @foreach (var (task, tindex) in newTasks.Select((task, index) => (task, index)))
+            {
+                <MudCard class="shadow-lg align-content-center" style="padding: 2px; margin:12px">
+                    <div class="row m-md-2 align-items-center">
+                        <div class="col">
+                            <MudText Typo="Typo.h5" class="m-md-2">Task - @(tindex + 1)</MudText>
+                        </div>
+                        <div class="col-auto">
+                            @if (newTasks.Count > 1)
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Secondary" @onclick="() => removeTask(newTasks, newTasks[tindex])" />
+                            }
+                        </div>
+                    </div>
+                    <MudCardContent>
+                        <MudCard class="shadow p-2 mb-5 bg-white rounded" style="margin: 2px;">
+                            <div>
+                                Task - @(tindex + 1):
+                                <MudTextField @bind-Value="@task.TaskName" id="TaskName" placeholder="TaskName" class="col-11" /><br />
+                            </div>
+                            <div>
+                                @foreach (var tagindex in Enumerable.Range(0, task.Tags.Count))
+                                {
+                                    <div class="col">
+                                        <p>tag - @(tagindex + 1):</p>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-grow-1">
+                                                <MudTextField t=string @bind-Value="task.Tags[tagindex]" Variant="Variant.Outlined" Clearable="true" class="py-2" />
+                                            </div>
+
+                                            @if (task.Tags.Count > 1)
+                                            {
+                                                <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Secondary" @onclick="() => removeTag(task, task.Tags[tagindex])" />
+                                            }
+
+                                            @if (task.Tags.Count == tagindex + 1)
+                                            {
+                                                <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" @onclick="() => addTag(task)" />
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            <div>
+                                DueDate - @(tindex + 1):
+                                <MudDatePicker @bind-Value="@task.DueDate" id="DueDate" Color="Color.Success" placeholder="DueDate" class="col-11" /><br />
+                            </div>
+                            <div>
+                                Color - @(tindex + 1):
+                                <MudTextField @bind-Value="@task.Color" id="Color" placeholder="Color"/><br />
+                            </div>
+                            <div>
+                                AssignedTo - @(tindex + 1):
+                                <MudTextField @bind-Value="@task.AssignedTo" id="AssignedTo" placeholder="AssignedTo" /><br />
+                            </div>
+                            <MudSelect Label="Select an option" @bind-Value="task.Status">
+                                @foreach (StatusEnum option in Enum.GetValues(typeof(StatusEnum)))
+                                {
+                                    <MudSelectItem Value="option">@option.ToString()</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudCard>
+                    </MudCardContent>
+                </MudCard>
+            }
+            <div class="row m-md-2 align-items-center">
+                <div class="col">
+                <button class="btn btn-secondary" @onclick="addNewTask">Add Another Task</button>
+                </div>
+                <div class="col-auto">
+                <button class="btn btn-primary" @onclick="addTask">Add Task</button>
+                </div>
+            </div>
+        </div> 
+
+    </MudCard>
+</MudContainer> 
+@code {
+    private List<TaskTrackerModel> newTasks;
+    [Inject]
+    private TaskServices taskServices { get; set; }
+    [Inject]
+    private NavigationManager navigationmanager { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        newTasks = new List<TaskTrackerModel> { new TaskTrackerModel { Tags = new List<string> { "" } } };
+    }
+
+    private void addNewTask()
+    {
+        newTasks.Add(new TaskTrackerModel { Tags = new List<string> { "" } });
+    }
+
+    private void addTag(TaskTrackerModel task)
+    {
+        task.Tags.Add("");
+    }
+
+    private void removeTask(List<TaskTrackerModel> tasklist, TaskTrackerModel task)
+    {
+        tasklist.Remove(task);
+    }
+    private void removeTag(TaskTrackerModel task, string tag)
+    {
+        task.Tags.Remove(tag);
+    }
+
+    private async Task addTask()
+    {
+        if (newTasks.Count > 0)
+        {
+            var issuccess = await taskServices.AddTasks(newTasks);
+            Snackbar.Add(issuccess, issuccess.Contains("successfully") ? Severity.Success : Severity.Error);
+        }
+        navigationmanager.NavigateTo("/");
+    }
+    private void navigatetomainpage()
+    {
+        navigationmanager.NavigateTo("/");
+    }
+}

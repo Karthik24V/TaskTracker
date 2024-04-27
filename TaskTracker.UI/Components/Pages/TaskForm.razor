@@ -1,0 +1,138 @@
+﻿@page "/viewtask/{id}"
+@using TaskTracker.UI.Models
+
+@inject TaskServices taskService
+@inject NavigationManager navigationManager
+
+<MudContainer class="outlined-card">
+    <MudCard class="border-2" Style="padding : 17px">
+        <MudToolBar>
+            <div class="toolbar-content" style="display: flex; align-items: center;padding-bottom: 10px">
+                <!-- Back button -->
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" @onclick="NavigateToMainPage">
+                    <MudIcon Icon="@Icons.Material.Outlined.ArrowBack" />
+                </MudButton>
+                <!-- Title -->
+                <MudText Typo="Typo.h4" style="margin-left: 10px;">View Task</MudText>
+            </div>
+        </MudToolBar>
+        @if (task != null)
+        {
+            <div>
+                <MudCardContent>
+                    <MudCard Class="shadow p-2 mb-5 bg-white rounded" Style="margin: 2px;">
+                        <div class="row overflow-visible p-2">
+                            <div class="d-flex col-md-6">
+                                <label for="TaskName" class="fw-bolder">Task:</label>
+                                <MudText id="TaskName" Placeholder="TaskName">@task.TaskName</MudText><br />
+                            </div>
+                            <div class="d-flex col-md-6 ">
+                                <label for="DueDate" style="padding-bottom: 4px" class="fw-bolder">Due Date:</label>
+                                <MudText id="DueDate" Placeholder="Due Date" Style="padding-left: 17px">@task.DueDate</MudText><br />
+                            </div>
+                        </div>
+
+                        <div class="row p-2">
+                            <div class="d-flex col-md-6">
+                                <label for="Tag" class="fw-bolder" > Tags:</label>
+                                <div>
+                                    @foreach (var (Tag, index) in task.Tags.Select((tag, index) => (tag, index)))
+                                    {
+                                        <MudChip Color="@GetChipColor(index)" Variant="Variant.Outlined" Size="Size.Small">@Tag</MudChip>
+                                    }
+                                </div>
+                            </div>
+                            <div class="d-flex col-md-6">
+                                <label for="AssignedTo" style="padding-bottom: 4px" class="fw-bolder">Assigned To:</label>
+                                <MudText id="AssignedTo" Placeholder="AssignedTo" Style="padding-left: 17px">@task.AssignedTo</MudText><br />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="d-flex col-md-6">
+                                <label for="Color" style="padding-bottom: 4px" class="fw-bolder">Color :</label>
+                                <MudText id="Color" Placeholder="Color" Style="padding-left: 17px">@task.Color</MudText><br />
+                            </div>
+                            <div class="col-md-6 d-flex">
+                                <label for="Status" style="padding-bottom: 4px" class="fw-bolder" >Status :</label>
+                                <MudChip Color="@GetColorForStatus(task.Status.ToString())" Variant="Variant.Outlined" Size="Size.Small">@task.Status</MudChip><br />
+                            </div>
+                        </div>
+                    </MudCard>
+                    <MudTable Items="@task.Activities" Hover="true" Class="my-custom-table shadow-sm">
+                        <HeaderContent>
+                            <MudTh Class="fw-bold text-center" colspan="4">Activity Description</MudTh>
+                            <MudTh Class="fw-bold text-center" colspan="1">Activity Date</MudTh>
+                            <MudTh Class="fw-bold text-center" colspan="2">Done By</MudTh>
+                        </HeaderContent>
+                        <RowTemplate Context="rowContext">
+                            <MudTd colspan="4" Class="text-center">@rowContext.ActivityDescription</MudTd>
+                            <MudTd colspan="1" Class="text-center">@rowContext.ActivityDate</MudTd>
+                            <MudTd colspan="2" Class="text-center">@rowContext.DoneBy</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+            </div>
+        }
+        else
+        {
+            <MudText Typo="Typo.h6">Loading.......</MudText>
+        }
+    </MudCard>
+</MudContainer>
+
+
+
+
+@code {
+    private TaskTrackerModel task;
+
+    [Parameter]
+    public string Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        int taskId;
+        if (int.TryParse(Id, out taskId))
+        {
+            task = await taskService.GetTaskWithId(taskId);
+        }
+    }
+    private async Task NavigateToMainPage()
+    {
+        navigationManager.NavigateTo("/");
+    }
+    private MudBlazor.Color GetChipColor(int index)
+    {
+        switch (index % 4)
+        {
+            case 0:
+                return Color.Primary;
+            case 1:
+                return Color.Secondary;
+            case 2:
+                return Color.Info;
+            default:
+                return Color.Default;
+        }
+    }
+    private MudBlazor.Color GetColorForStatus(string status)
+    {
+        switch (status)
+        {
+            case "Open":
+                return Color.Primary;
+            case "Pending":
+                return Color.Inherit;
+            case "InProgress":
+                return Color.Info;
+            case "Cancelled":
+                return Color.Error;
+            case "Completed":
+                return Color.Success;
+            case "OnHold":
+                return Color.Inherit;
+            default:
+                return Color.Default;
+        }
+    }
+}

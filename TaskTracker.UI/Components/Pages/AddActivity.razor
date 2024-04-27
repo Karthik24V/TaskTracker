@@ -1,0 +1,101 @@
+﻿@page "/addactivity/{id}"
+@using TaskTracker.DL.Models
+@using TaskTracker.UI.Models
+@layout MainLayout
+@inject ISnackbar Snackbar
+
+<MudContainer class="outlined-card">
+    <MudCard class="border-2" Style="padding : 17px">
+        <MudToolBar>
+            <div class="toolbar-content" style="display: flex; align-items: center;">
+                <!-- Back button -->
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" @onclick="navigatetomainpage">
+                    <MudIcon Icon="@Icons.Material.Filled.ArrowBack" />
+                </MudButton>
+                <!-- Title -->
+                <MudText Typo="Typo.h4" style="margin-left: 10px;">Add New Activity</MudText>
+            </div>
+        </MudToolBar>
+        @foreach (var (activity, qindex) in newActivity.Select((activity, index) => (activity, index)))
+        {
+             <MudCard class="shadow-lg align-content-center" style="padding: 2px; margin:12px">
+                    <div class="row m-md-2 align-items-center">
+                        <div class="col">
+                            <MudText Typo="Typo.h5" class="m-md-2">Task - @(qindex + 1)</MudText>
+                        </div>
+                        <div class="col-auto">
+                            @if (newActivity.Count > 1)
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Secondary" @onclick="() => RemoveActivity(newActivity, newActivity[qindex])" />
+                            }
+                        </div>
+                    </div>
+                    <MudCardContent>
+                        <MudCard class="shadow p-2 mb-5 bg-white rounded" style="margin: 2px;">
+                        <div class="row">
+                            <label for="ActivityDescription" style="padding-bottom: 4px">Activity Description - @(qindex + 1):</label>
+                            <InputTextArea @bind-Value="@activity.ActivityDescription" class="col-11" id="ActivityDescription" Placeholder="Activity Description" style="min-height: 60px; margin-left:13px"></InputTextArea><br />
+                        </div>
+                        <div>
+                            Activity Date - @(qindex + 1):
+                            <MudDatePicker @bind-Value="@activity.ActivityDate" id="ActivityDate" placeholder="ActivityDate" class="col-11" Color="Color.Success"/><br />
+                        </div>
+                        <div>
+                            Done By - @(qindex + 1):
+                            <MudTextField @bind-Value="@activity.DoneBy" id="DoneBy" placeholder="DoneBy" /><br />
+                        </div>
+                        </MudCard>
+                    </MudCardContent>
+                </MudCard>
+            }
+            <div class="row m-md-2 align-items-center">
+                <div class="col">
+                <button class="btn btn-secondary" @onclick="addNewActivity">Add Another Activity</button>
+                </div>
+                <div class="col-auto">
+                <button class="btn btn-primary" @onclick="addActivity">Add Activity</button>
+                </div>
+            </div>
+    </MudCard>
+</MudContainer> 
+
+@code {
+    private List<ActivityDTO> newActivity;
+    [Parameter]
+    public string Id { get; set; }
+    [Inject]
+    private TaskServices taskService { get; set; }
+    [Inject]
+    private NavigationManager navigationManager { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        int taskId;
+        if (int.TryParse(Id, out taskId))
+        {
+            newActivity = new List<ActivityDTO>() { new ActivityDTO { TodoItemId = taskId } };
+
+        }
+    }
+    private void RemoveActivity(List<ActivityDTO> activitylist, ActivityDTO activity)
+    {
+        activitylist.Remove(activity);
+    }
+    private void addNewActivity()
+    {
+        newActivity.Add(new ActivityDTO { TodoItemId = int.Parse(Id) });
+    }
+    private async Task addActivity()
+    {
+        if (newActivity.Count > 0)
+        {
+            var issuccess = await taskService.AddActivity(newActivity, int.Parse(Id));
+            Snackbar.Add(issuccess, issuccess.Contains("successfully") ? Severity.Success : Severity.Error);
+        }
+        navigationManager.NavigateTo("/");
+    }
+    private void navigatetomainpage()
+    {
+        navigationManager.NavigateTo("/");
+    }
+}

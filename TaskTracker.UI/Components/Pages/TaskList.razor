@@ -1,0 +1,154 @@
+﻿@page "/"
+@using TaskTracker.BL.Models
+@using TaskTracker.DL.Models
+@using TaskTracker.UI.Enum
+@using TaskTracker.UI.Models
+@inject HttpClient httpClient
+@inject TaskServices TaskService
+@layout MainLayout
+@inject ISnackbar Snackbar
+<style>
+    .mud-table-cell-custom-group {
+        font-weight: 500;
+    }
+
+    .mud-table-cell-custom-group-footer {
+        padding-bottom: 50px;
+        text-align: right;
+    }
+</style>
+<MudContainer>
+    <MudDrawerContainer Class="mud-height-full">
+        <MudDrawer @bind-Open="@openEnd" Fixed="false" Anchor="Anchor.Top" Elevation="0" Variant="@DrawerVariant.Persistent" Style="@(openEnd ?"padding: 15px; min-hight: 200px":"width:0")" Class="@(openEnd ?"w-25 shadow" :"w-0")">
+            <MudDrawerHeader>
+                <div class="d-flex justify-content-between w-100">
+                    <MudText Typo="Typo.h6">Task Filter</MudText>
+                    <MudIconButton Icon="@Icons.Material.Filled.Clear" Color="Color.Secondary" @onclick="() => {openEnd = !openEnd;}" />
+                </div>
+            </MudDrawerHeader>
+            <MudNavMenu>
+                <div>
+                    <div>
+                        Task Name:
+                        <MudTextField @bind-Value="@searchData.TaskName" id="TaskName" placeholder="TaskName" class="col-11" /><br />
+                    </div>
+                </div>
+                <div>
+                    <div>
+                        Tag:
+                        <MudTextField @bind-Value="@searchData.Tags" id="TaskName" placeholder="TaskName" class="col-11" /><br />
+                    </div>
+                </div>
+                <div>
+                    <div>
+                        Tag:
+                        <MudTextField @bind-Value="@searchData.Tags" id="TaskName" placeholder="TaskName" class="col-11" /><br />
+                    </div>
+                </div>
+               @*  <MudSelect Label="Select an option" @bind-Value="@searchData.Statuses" MultiSelection="true">
+                    @foreach (StatusEnum option in Enum.GetValues(typeof(StatusEnum)))
+                    {
+                        <MudSelectItem Value="option">@option.ToString()</MudSelectItem>
+                    }
+                </MudSelect> *@
+                <div>
+                    <div class="row m-md-2 align-items-center">
+                        <div class="d-flex  justify-content-between w-100">
+                            <button class="btn btn-secondary" @onclick="ClearFilter">Clear Filter</button>
+                            <button class="btn btn-primary" @onclick="ApplyFilter">Search Task</button>
+                        </div>
+                    </div>
+                </div>
+            </MudNavMenu>
+        </MudDrawer>
+    </MudDrawerContainer>
+    <MudToolBar Style="margin-bottom: 22px">
+        <div class="row d-flex justify-content-between w-100">
+            <MudText Typo="Typo.h4" Style="padding-bottom: 5px">
+                Task Tracker DashBoard
+            </MudText>
+            <div class="d-flex justify-content-between w-100">
+                <div class="ms-auto" style="margin-right: -42px">
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" @onclick="OpenAddTask">Add Task</MudButton>
+                    <MudIconButton Icon="@Icons.Material.Outlined.FilterAlt" Color="Color.Default" OnClick="@ToggleEndDrawer" />
+                </div>
+            </div>
+        </div>
+    </MudToolBar>
+    <div style="@((openEnd) ? "filter: blur(5px); transition: filter 0.3s ease;" : "")">
+
+        <TaskTableData @ref="taskTableData" Elements="Elements"></TaskTableData>
+
+    </div>
+</MudContainer>
+
+@code {
+    [Inject]
+    private NavigationManager navigationManager { get; set; }
+    [Inject]
+    private TaskServices taskServices { get; set; }
+    private TaskTableData taskTableData;
+    SearchData searchData = new SearchData();
+    string searchTerm = "";
+    bool openEnd = false;
+    async Task SearchTasks()
+    {
+        // tasks = await TaskService.SearchTasks(searchTerm);
+    }
+    private async Task PerformSearchfilter(ChangeEventArgs e)
+    {
+        // selectedFilter = e?.Value.ToString();
+        // await LoadData();
+    }
+
+    void ViewTask(int taskId)
+    {
+        navigationManager.NavigateTo($"/task/{taskId}");
+    }
+    private void OpenAddTask()
+    {
+        navigationManager.NavigateTo("/addTask");
+    }
+    private async Task ApplyFilter()
+    {
+        // await LoadData();
+        openEnd = !openEnd;
+    }
+    private async Task ClearFilter()
+    {
+        // quoteSearch = new Quote
+        //     {
+        //         Tags = new List<string> { "" }
+        //     };
+    }
+    private async Task ViewActivity()
+    {
+        // quoteSearch = new Quote
+        //     {
+        //         Tags = new List<string> { "" }
+        //     };
+    }
+    void ToggleEndDrawer()
+    {
+        openEnd = !openEnd;
+    }
+    private TableGroupDefinition<ActivityData> _groupDefinition = new()
+        {
+            GroupName = "Task",
+            Indentation = false,
+            Expandable = true,
+            IsInitiallyExpanded = false,
+            Selector = (e) => e.Id
+        };
+    private MudTable<ActivityData> _tableRef;
+    public IEnumerable<TaskTrackerModel> Elements = new List<TaskTrackerModel>();
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        List<TaskTrackerModel> tasks = await taskServices.SearchTasks(searchData);
+        Elements = tasks;
+        // taskTableData.ReceiveData(tasks);
+
+    }
+}

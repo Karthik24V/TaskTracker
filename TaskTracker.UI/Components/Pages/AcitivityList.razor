@@ -1,0 +1,34 @@
+﻿@page "/task/{Id:int}/activities"
+@inject TaskServices TaskService
+@using MudBlazor
+
+<MudContainer>
+    <MudPaper>
+        <h3>Task Activities</h3>
+        @* @if (activities != null && activities.Any())
+        {
+            <ul>
+                @foreach (var activity in activities)
+                {
+                    <li>@activity.ActivityName - @activity.ActivityDate.ToShortDateString()</li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p>No activities found.</p>
+        } *@
+    </MudPaper>
+</MudContainer>
+
+@code {
+    // List<ActivityDTO> activities = new List<ActivityDTO>();
+
+    // [Parameter]
+    // public int Id { get; set; }
+
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     activities = await TaskService.GetTaskActivities(Id);
+    // }
+}
